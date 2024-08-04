@@ -4,14 +4,10 @@
 #include <sys/wait.h>
 #include <stdio.h>
 #include <vector>
-
-// comandos internos:
-//     - exit
-//     - pwd 
-//     - cd dir 
-//     - history (mostrar os últimos comandos executados)
+#include <string>
 
 using namespace std;
+vector<vector<string>> history;
 
 void processo_comando(string comando){
     //argumentos
@@ -24,48 +20,76 @@ void processo_comando(string comando){
         end = comando.find(' ', start);
     }
     args.push_back(comando.substr(start));
-    
 
-    if(args[0] == "pwd"){
-        cout << filesystem::current_path() << endl;
-        return;
-    }
-    if(args[0] == "cd"){
-        chdir(args[1].c_str());
-        return;
-    }
-
-    string caminho_absoluto = "/mnt/d/desenvolvimento/repositorios/ShellSistemasOperacionais/chamadas";
-    //executar comando
-    if(access(caminho_absoluto.c_str(), F_OK) == 0){ //verificando que o diretório existe
-        if(access(caminho_absoluto.c_str(), X_OK) == 0){ //verificando se o arquivo é executável
-            //dividindo entre processo filho e processo pai
-            pid_t pid = fork();
-            if(pid < 0){
-                cout << "Erro de execução." << endl;
+    if(args[0] == "pwd" || args[0] == "cd" || args[0] == "history"){ 
+        if(args[0] != "history")
+            history.push_back(args);
+        if(args[0] == "pwd"){
+            cout << filesystem::current_path() << endl;
+            return;
+        }
+        if(args[0] == "cd"){
+            chdir(args[1].c_str());
+            return;
+        }
+        if(args[0] == "history"){
+            if(args.size() == 1){
+                for(int i = 0; i < history.size(); i++){
+                    cout << ((i-history.size()) * -1 ) - 1<< " " << history[i][0] << endl;
+                } 
                 return;
             }
-            else if(pid == 0){
-                vector<char*> argv;
-                argv.push_back((char *)args[0].c_str());
-                if(args.size() > 1){
-                    argv.push_back((char *)args[1].c_str());
-                    if(args.size() == 3)
-                        argv.push_back((char *)args[2].c_str());
-                }
-                argv.push_back(nullptr);
-                execvp(argv[0], argv.data());
-            }
             else{
-                //to do
-            }
-        }
-        else{
-            cout << "Permissão negada: " << comando << endl;
+                if(args[1] == "-c"){
+                    history.clear();
+                    return;
+                }
+                else{
+                    int comando = stoi(args[1]);
+                    args[0] = history[(comando*-1)+history.size()-1][0];
+                    args[1] = history[(comando*-1)+history.size()-1][1];
+                    if(history[(comando*-1)+history.size()-1].size() > 1){
+                        args[2] = history[(comando*-1)+history.size()-1][2];
+                    }
+                }
+            } 
         }
     }
     else{
-        cout << "Comando não encontrado." << endl;
+        string caminho_absoluto = "/mnt/d/desenvolvimento/repositorios/ShellSistemasOperacionais/chamadas";
+        string caminho_vec = "/mnt/d/desenvolvimento/repositorios/ShellSistemasOperacionais/chamadas/" + args[0];
+        //executar comando
+        if(access(caminho_vec.c_str(), F_OK) == 0){ //verificando que o diretório existe
+            if(access(caminho_vec.c_str(), X_OK) == 0){ //verificando se o arquivo é executável
+                //dividindo entre processo filho e processo pai
+                pid_t pid = fork();
+                if(pid < 0){
+                    cout << "Erro de execução." << endl;
+                    return;
+                }
+                else if(pid == 0){
+                    vector<char*> argv;
+                    argv.push_back((char *)args[0].c_str());
+                    if(args.size() > 1){
+                        argv.push_back((char *)args[1].c_str());
+                        if(args.size() == 3)
+                            argv.push_back((char *)args[2].c_str());
+                    }
+                    argv.push_back(nullptr);
+                    execvp(argv[0], argv.data());
+                    history.push_back(args);
+                }
+                else{
+                    waitpid(pid, nullptr, 0);
+                }
+            }
+            else{
+                cout << "Permissão negada: " << comando << endl;
+            }
+        }
+        else{
+            cout << "Comando não encontrado." << endl;
+        }
     }
 }
 
