@@ -59,11 +59,16 @@ void processo_comando(string comando){
                     int comando = stoi(args[1]);
                     comando = (comando*-1)+history.size()-1;
                     args[0] = history[comando][0];
-                    if(history[comando].size() > 1)
+                    if(history[comando].size() != 1){
                         args[1] = history[comando][1];
-                    if(history[comando].size() > 2){
-                        args[2] = history[comando][2];
+                        if(history[comando].size() > 2){
+                            args[2] = history[comando][2];
+                        }
                     }
+                    else{
+                        args.pop_back();
+                    }
+                    
                     if(args[0] != "cd" && args[0] != "pwd"){
                         x = 1;
                     }
