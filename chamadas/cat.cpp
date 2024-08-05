@@ -24,4 +24,5 @@ int main(int argc, char **argv){
         }
         close(file); //fechando o arquivo
     }
+    printf("\n");
 }

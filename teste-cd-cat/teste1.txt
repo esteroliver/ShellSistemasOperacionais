@@ -1,0 +1,1 @@
+Testando o cp, o cd e o cat.
