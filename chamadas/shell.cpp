@@ -12,8 +12,6 @@ vector<vector<string>> history;
 diretorio dir;
 
 void processo_comando(string comando){
-    
-
     //argumentos
     vector<string> args;
     size_t start = 0;
@@ -24,52 +22,60 @@ void processo_comando(string comando){
         end = comando.find(' ', start);
     }
     args.push_back(comando.substr(start));
+    
+    int x = 1;
+    if(args[0] == "history" || args[0] == "pwd" || args[0] == "cd") 
+        x = 0;
 
-    if(args[0] != "history" && args[0] == "pwd" || args[0] == "cd")
-        history.push_back(args);
-    if(args[0] == "pwd"){
-        cout << filesystem::current_path() << endl;
-        return;
-    }
-    if(args[0] == "cd"){
-        chdir(args[1].c_str());
-        return;
-    }
-    if(args[0] == "history"){
-        if(args.size() == 1){
-            for(int i = 0; i < history.size(); i++){
-                if(history[i].size() != 1){
-                    cout << ((i-history.size()) * -1 ) - 1 << " " << history[i][0] << "/" << history[i][1] << endl;
-                }
-                else{
-                    cout << ((i-history.size()) * -1 ) - 1 << " " << history[i][0] << endl;
-                }
-            } 
+    while(x == 0){
+        if(args[0] != "history" && args[0] == "pwd" || args[0] == "cd")
+            history.push_back(args);
+        if(args[0] == "pwd"){
+            cout << filesystem::current_path() << endl;
             return;
         }
-        else{
-            if(args[1] == "-c"){
-                history.clear();
+        if(args[0] == "cd"){
+            chdir(args[1].c_str());
+            return;
+        }
+        if(args[0] == "history"){
+            if(args.size() == 1){
+                for(int i = 0; i < history.size(); i++){
+                    if(history[i].size() != 1){
+                        cout << ((i-history.size()) * -1 ) - 1 << " " << history[i][0] << "/" << history[i][1] << endl;
+                    }
+                    else{
+                        cout << ((i-history.size()) * -1 ) - 1 << " " << history[i][0] << endl;
+                    }
+                } 
                 return;
             }
             else{
-                int comando = stoi(args[1]);
-                cout << comando << endl;
-                comando = (comando*-1)+history.size()-1;
-                args[0] = history[comando][0];
-                if(history[comando].size() > 1)
-                    args[1] = history[comando][1];
-                if(history[comando].size() > 2){
-                    args[2] = history[comando][2];
+                if(args[1] == "-c"){
+                    history.clear();
+                    return;
                 }
-                cout << args[0] << endl;
-            }
-        } 
+                else{
+                    int comando = stoi(args[1]);
+                    comando = (comando*-1)+history.size()-1;
+                    args[0] = history[comando][0];
+                    if(history[comando].size() > 1)
+                        args[1] = history[comando][1];
+                    if(history[comando].size() > 2){
+                        args[2] = history[comando][2];
+                    }
+                    if(args[0] != "cd" && args[0] != "pwd"){
+                        x = 1;
+                    }
+                }
+            } 
+        }
     }
 
     char *caminho = dir.getDiretorio();
     string caminho_absoluto = (string) caminho;
     string caminho_vec = caminho_absoluto + '/' + args[0];
+
     //executar comando
     if(access(caminho_absoluto.c_str(), F_OK) == 0){ //verificando que o diretório existe
         if(access(caminho_vec.c_str(), X_OK) == 0){ //verificando se o arquivo é executável
